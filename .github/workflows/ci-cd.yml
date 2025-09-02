@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Python tests (simulados por ahora)
+      # Python tests (simulados)
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -23,7 +23,7 @@ jobs:
       - name: Run pytest (simulado)
         run: |
           echo "Running Python tests..."
-          # Aquí más adelante: pytest
+          # Aquí después agregas pytest real
 
   build_and_deploy:
     needs: checks
@@ -51,17 +51,14 @@ jobs:
         uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Init
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform init
+        run: terraform -chdir=${{ env.TERRAFORM_DIR }} init
 
       - name: Terraform Plan
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform plan \
+        run: terraform -chdir=${{ env.TERRAFORM_DIR }} plan \
           -var="artifacts_bucket=${{ secrets.ARTIFACTS_BUCKET }}" \
           -var="lambda_s3_key=${{ secrets.LAMBDA_S3_KEY }}" \
           -out=tfplan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform apply -auto-approve tfplan
+        run: terraform -chdir=${{ env.TERRAFORM_DIR }} apply -auto-approve tfplan
