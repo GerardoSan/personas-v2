@@ -1,0 +1,22 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+crash.log
+override.tf
+override.tf.json
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+

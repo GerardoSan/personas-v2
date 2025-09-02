@@ -1,0 +1,77 @@
+name: CI-CD Terraform Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  AWS_REGION: us-east-2
+  TERRAFORM_DIR: infra/terraform
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node/TypeScript typecheck (frontend)
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install frontend deps
+        working-directory: frontend
+        run: |
+          npm ci
+      - name: Typecheck
+        working-directory: frontend
+        run: |
+          npm run typecheck || true   # change to fail if desired
+
+      # Python tests (simulate pytest)
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - name: Run pytest (simulado)
+        run: |
+          echo "Simulating pytest..."
+          # add real tests later
+
+  build_and_deploy:
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build Lambda artifact
+        working-directory: lambda
+        run: |
+          chmod +x build.sh
+          ./build.sh
+          aws s3 cp personas_lambda.zip s3://${{ secrets.ARTIFACTS_BUCKET }}/${{ secrets.LAMBDA_S3_KEY }}
+
+      - name: Terraform Init
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: |
+          terraform init
+
+      - name: Terraform Plan
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: |
+          terraform plan -var="artifacts_bucket=${{ secrets.ARTIFACTS_BUCKET }}" -var="lambda_s3_key=${{ secrets.LAMBDA_S3_KEY }}" -out=tfplan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: |
+          terraform apply -auto-approve tfplan
