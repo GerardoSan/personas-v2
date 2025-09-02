@@ -42,8 +42,12 @@ jobs:
           ./build.sh
           aws s3 cp personas_lambda.zip s3://${{ secrets.ARTIFACTS_BUCKET }}/${{ secrets.LAMBDA_S3_KEY }}
 
-      - name: Terraform Init
-        run: terraform -chdir=${{ env.TERRAFORM_DIR }} init
+      - name: Terraform Plan
+        run: |
+          terraform -chdir=infra/terraform plan \
+          -var="artifacts_bucket=${{ secrets.ARTIFACTS_BUCKET }}" \
+          -var="lambda_s3_key=${{ secrets.LAMBDA_S3_KEY }}" \
+          -out=tfplan
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan
