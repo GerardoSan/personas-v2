@@ -47,7 +47,7 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan -chdir=infra/terraform -out=tfplan
-        #-var="artifacts_bucket=${{ secrets.ARTIFACTS_BUCKET }}" -var="lambda_s3_key=${{ secrets.LAMBDA_S3_KEY }}" -out=tfplan
+       
       
       
 
