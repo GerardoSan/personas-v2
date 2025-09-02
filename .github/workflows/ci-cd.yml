@@ -8,6 +8,7 @@ on:
 env:
   AWS_REGION: us-east-2
   TERRAFORM_DIR: infra/terraform
+  TERRAFORM_VERSION: 1.9.2   # puedes ajustar versión
 
 jobs:
   build_and_deploy:
@@ -15,6 +16,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -24,15 +26,21 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_wrapper: false   
-
-      - name: Remove terraform-bin if exists
+      - name: Install Terraform
         run: |
-          rm -f $(which terraform-bin) || true
+          sudo apt-get update
+          sudo apt-get install -y unzip curl
+          curl -fsSL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o terraform.zip
+          unzip terraform.zip
+          sudo mv terraform /usr/local/bin/
           terraform -version
+
+      - name: Build Lambda artifact
+        working-directory: lambda
+        run: |
+          chmod +x build.sh
+          ./build.sh
+          aws s3 cp personas_lambda.zip s3://${{ secrets.ARTIFACTS_BUCKET }}/${{ secrets.LAMBDA_S3_KEY }}
 
       - name: Terraform Init
         run: terraform -chdir=${{ env.TERRAFORM_DIR }} init
@@ -46,3 +54,4 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         run: terraform -chdir=${{ env.TERRAFORM_DIR }} apply -auto-approve tfplan
+
