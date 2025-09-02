@@ -10,23 +10,7 @@ env:
   TERRAFORM_DIR: infra/terraform
 
 jobs:
-  checks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-      - name: Run pytest (simulado)
-        run: |
-          echo "Running Python tests..."
-          # Aquí más adelante agregas pytest real
-
   build_and_deploy:
-    needs: checks
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -40,17 +24,15 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Build Lambda artifact
-        working-directory: lambda
-        run: |
-          chmod +x build.sh
-          ./build.sh
-          aws s3 cp personas_lambda.zip s3://${{ secrets.ARTIFACTS_BUCKET }}/${{ secrets.LAMBDA_S3_KEY }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_wrapper: false   
+
+      - name: Remove terraform-bin if exists
+        run: |
+          rm -f $(which terraform-bin) || true
+          terraform -version
 
       - name: Terraform Init
         run: terraform -chdir=${{ env.TERRAFORM_DIR }} init
