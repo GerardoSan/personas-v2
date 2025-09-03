@@ -1,0 +1,59 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+env:
+  AWS_REGION: us-east-2
+  TERRAFORM_DIR: infra/terraform
+  TERRAFORM_VERSION: 1.9.2   
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Terraform
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip curl
+          curl -fsSL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o terraform.zip
+          unzip terraform.zip
+          sudo mv terraform /usr/local/bin/
+          terraform -version
+
+      - name: Build Lambda artifact
+        working-directory: lambda
+        run: |
+          chmod +x build.sh
+          ./build.sh
+          aws s3 cp personas_lambda.zip s3://${{ secrets.ARTIFACTS_BUCKET }}/${{ secrets.LAMBDA_S3_KEY }}
+
+      - name: Terraform Init
+        run: terraform -chdir=${{ env.TERRAFORM_DIR }} init
+
+      - name: Terraform Plan
+        run: |
+          terraform -chdir=infra/terraform plan \
+          -var="artifacts_bucket=${{ secrets.ARTIFACTS_BUCKET }}" \
+          -var="lambda_s3_key=${{ secrets.LAMBDA_S3_KEY }}" \
+          -out=tfplan
+
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform -chdir=${{ env.TERRAFORM_DIR }} apply -auto-approve tfplan
+
