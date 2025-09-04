@@ -27,13 +27,16 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Grupo de logs de CloudWatch para ECS
+# Importar el grupo de logs existente de CloudWatch para ECS
 resource "aws_cloudwatch_log_group" "ecs_logs" {
   name              = "/ecs/${var.environment}-personas-frontend"
   retention_in_days = 30
   tags = {
     Environment = var.environment
     Project     = "personas"
+  }
+  lifecycle {
+    ignore_changes = [name]
   }
 }
 

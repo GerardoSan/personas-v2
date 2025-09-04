@@ -98,8 +98,10 @@ jobs:
         if: github.ref == 'refs/heads/main'
         working-directory: frontend
         run: |
-          # Obtener la URL del API Gateway desde Terraform
-          API_GATEWAY_URL=$(aws apigatewayv2 get-apis --query "Items[?Name=='personas-api'].ApiEndpoint" --output text)
+          # Obtener la URL del API Gateway v2
+          API_ID=$(aws apigatewayv2 get-apis --query "Items[?Name=='personas-api'].ApiId" --output text)
+          API_GATEWAY_URL="https://${API_ID}.execute-api.${AWS_REGION}.amazonaws.com/$DEFAULT"
+          echo "API Gateway URL: $API_GATEWAY_URL"
           
           # Registrar la tarea de ECS
           aws ecs register-task-definition \
