@@ -1,4 +1,5 @@
 # Recurso de ECR para almacenar la imagen Docker del frontend
+/*
 resource "aws_ecr_repository" "frontend" {
   name                 = "personas-frontend"
   image_tag_mutability = "MUTABLE"
@@ -12,6 +13,7 @@ resource "aws_ecr_repository" "frontend" {
     Project     = "personas"
   }
 }
+*/
 
 # IAM Role para la tarea ECS
 resource "aws_iam_role" "ecs_task_execution_role" {
@@ -115,7 +117,7 @@ resource "aws_ecs_cluster" "main" {
 # Security Group para el ALB
 resource "aws_security_group" "alb" {
   name        = "${var.environment}-alb-sg"
-  description = "Controla el tráfico hacia el ALB"
+  description = "Controla el trafico hacia el ALB"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -226,7 +228,7 @@ resource "aws_ecs_service" "frontend" {
 # Security Group para las tareas ECS
 resource "aws_security_group" "ecs_tasks" {
   name        = "${var.environment}-ecs-tasks-sg"
-  description = "Permitir tráfico entrante solo desde el ALB"
+  description = "Permitir trafico entrante solo desde el ALB"
   vpc_id      = aws_vpc.main.id
 
   egress {
