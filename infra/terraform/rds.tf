@@ -15,7 +15,8 @@ tags = { Name = "${var.project}-db-sg" }
 resource "random_password" "db_password" {
   length           = 16
   special          = true
-  override_special = "!@#$%^&*()_+-=[]{}|'"
+  # Usar solo caracteres especiales permitidos por RDS
+  override_special = "!@#%^*_+=-"
   min_upper        = 1
   min_lower        = 1
   min_numeric      = 1
