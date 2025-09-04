@@ -13,12 +13,17 @@ tags = { Name = "${var.project}-db-sg" }
 
 # SecretsManager 
 resource "random_password" "db_password" {
-  length  = 16
-  special = true
+  length           = 16
+  special          = true
+  override_special = "!@#$%^&*()_+-=[]{}|'"
+  min_upper        = 1
+  min_lower        = 1
+  min_numeric      = 1
+  min_special      = 1
 }
 
 resource "aws_secretsmanager_secret" "db_secret" {
-  name = "${var.project}-6/db/credentials"
+  name = "${var.project}-8/db/credentials"
 }
 
 resource "aws_secretsmanager_secret_version" "db_secret_version" {
