@@ -55,6 +55,12 @@ jobs:
           npm run build
           echo "REACT_APP_API_URL=${{ secrets.API_GATEWAY_URL }}" > .env.production
 
+      - name: Ensure ECR repository exists
+        run: |
+          # Verificar si el repositorio existe, si no existe, crearlo
+          aws ecr describe-repositories --repository-names ${{ env.ECR_REPOSITORY }} --region ${{ env.AWS_REGION }} || \
+          aws ecr create-repository --repository-name ${{ env.ECR_REPOSITORY }} --region ${{ env.AWS_REGION }}
+
       - name: Configure AWS CLI for ECR
         run: |
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
