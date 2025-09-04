@@ -77,7 +77,7 @@ resource "aws_ecs_task_definition" "frontend" {
       environment = [
         {
           name  = "REACT_APP_API_URL"
-          value = aws_apigatewayv2_stage.lambda.invoke_url
+          value = aws_apigatewayv2_stage.default_stage.invoke_url
         }
       ]
       logConfiguration = {
