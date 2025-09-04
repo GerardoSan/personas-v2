@@ -1,20 +1,3 @@
-# Recurso de ECR para almacenar la imagen Docker del frontend
-/*
-resource "aws_ecr_repository" "frontend" {
-  name                 = "personas-frontend"
-  image_tag_mutability = "MUTABLE"
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-
-  tags = {
-    Environment = var.environment
-    Project     = "personas"
-  }
-}
-*/
-
 # IAM Role para la tarea ECS
 resource "aws_iam_role" "ecs_task_execution_role" {
   name = "${var.environment}-ecs-task-execution-role"
@@ -67,7 +50,7 @@ resource "aws_ecs_task_definition" "frontend" {
   container_definitions = jsonencode([
     {
       name      = "personas-frontend"
-      image     = "${aws_ecr_repository.frontend.repository_url}:latest"
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/personas-frontend:latest"
       essential = true
       portMappings = [
         {
@@ -260,7 +243,9 @@ output "frontend_url" {
   value       = "http://${aws_lb.frontend.dns_name}"
 }
 
+data "aws_caller_identity" "current" {}
+
 output "ecr_repository_url" {
   description = "URL del repositorio ECR para el frontend"
-  value       = aws_ecr_repository.frontend.repository_url
+  value       = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/personas-frontend"
 }
