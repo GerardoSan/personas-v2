@@ -23,7 +23,7 @@ resource "random_password" "db_password" {
 }
 
 resource "aws_secretsmanager_secret" "db_secret" {
-  name = "${var.project}-8/db/credentials"
+  name = "${var.project}-9/db/credentials"
 }
 
 resource "aws_secretsmanager_secret_version" "db_secret_version" {
