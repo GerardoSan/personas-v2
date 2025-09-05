@@ -11,12 +11,12 @@ resource "aws_security_group" "db_sg" {
 tags = { Name = "${var.project}-db-sg" }
 }
 
-# SecretsManager 
+# Generador de contraseña segura para RDS
 resource "random_password" "db_password" {
   length           = 16
   special          = true
-  # Usar solo caracteres especiales permitidos por RDS
-  override_special = "!@#%^*_+=-"
+  # Usar solo caracteres que sabemos que son compatibles con RDS
+  override_special = "!@#%^*_+=-~"
   min_upper        = 1
   min_lower        = 1
   min_numeric      = 1
@@ -24,7 +24,7 @@ resource "random_password" "db_password" {
 }
 
 resource "aws_secretsmanager_secret" "db_secret" {
-  name = "${var.project}-11/db/credentials"
+  name = "${var.project}-12/db/credentials"
 }
 
 resource "aws_secretsmanager_secret_version" "db_secret_version" {
