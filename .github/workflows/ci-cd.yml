@@ -94,19 +94,33 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: terraform -chdir=${{ env.TERRAFORM_DIR }} apply -auto-approve tfplan
 
-      - name: Deploy to ECS
+      - name: Desplegar en ECS
         if: github.ref == 'refs/heads/main'
         working-directory: frontend
         run: |
-          # Obtener la URL del API Gateway v2
+          # Obtener el ID de la API Gateway
           API_ID=$(aws apigatewayv2 get-apis --query "Items[?Name=='personas-api'].ApiId" --output text)
-          API_GATEWAY_URL="https://${API_ID}.execute-api.${AWS_REGION}.amazonaws.com/$DEFAULT"
-          echo "API Gateway URL: $API_GATEWAY_URL"
+          if [ -z "$API_ID" ]; then
+            echo "Error: No se pudo obtener el ID de la API Gateway"
+            exit 1
+          fi
           
-          # Registrar la tarea de ECS
+          # Obtener el nombre del stage (por defecto es $default para HTTP APIs)
+          STAGE="$DEFAULT"
+          API_GATEWAY_URL="https://${API_ID}.execute-api.${AWS_REGION}.amazonaws.com/"
+          echo "URL de API Gateway: $API_GATEWAY_URL"
+          
+          # Obtener el ARN del rol de ejecución de ECS
+          TASK_EXECUTION_ROLE_ARN=$(aws iam get-role --role-name ecsTaskExecutionRole --query 'Role.Arn' --output text)
+          if [ -z "$TASK_EXECUTION_ROLE_ARN" ]; then
+            echo "Error: No se pudo obtener el ARN del rol de ejecución de ECS"
+            exit 1
+          fi
+          
+          # Registrar la definición de la tarea ECS
           aws ecs register-task-definition \
             --family ${{ env.ECS_CLUSTER }}-task \
-            --execution-role-arn ${{ secrets.ECS_TASK_EXECUTION_ROLE_ARN }} \
+            --execution-role-arn "$TASK_EXECUTION_ROLE_ARN" \
             --network-mode awsvpc \
             --requires-compatibilities FARGATE \
             --cpu 256 \
