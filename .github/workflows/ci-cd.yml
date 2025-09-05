@@ -99,11 +99,17 @@ jobs:
         working-directory: frontend
         run: |
           # Obtener el ID de la API Gateway
-          API_ID=$(aws apigatewayv2 get-apis --query "Items[?Name=='personas-api'].ApiId" --output text)
+          echo "Obteniendo ID de la API Gateway..."
+          API_ID=$(aws apigatewayv2 get-apis --query "Items[?contains(Name, 'personas')].ApiId" --output text)
+          
           if [ -z "$API_ID" ]; then
             echo "Error: No se pudo obtener el ID de la API Gateway"
+            echo "Listando todas las APIs disponibles para depuración:"
+            aws apigatewayv2 get-apis
             exit 1
           fi
+          
+          echo "ID de API Gateway encontrado: $API_ID"
           
           # Obtener el nombre del stage (por defecto es $default para HTTP APIs)
           STAGE="$DEFAULT"
