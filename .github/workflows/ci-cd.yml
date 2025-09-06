@@ -100,7 +100,7 @@ jobs:
         run: |
           # Obtener el ID de la API Gateway
           echo "Obteniendo ID de la API Gateway..."
-          API_ID=$(aws apigatewayv2 get-apis --query "Items[?contains(Name, 'personas')].ApiId" --output text)
+          API_ID=$(aws apigatewayv2 get-apis --query "Items[?Name=='prestamype-app-api'].ApiId" --output text)
           
           if [ -z "$API_ID" ]; then
             echo "Error: No se pudo obtener el ID de la API Gateway"
